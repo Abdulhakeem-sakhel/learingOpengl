@@ -34,9 +34,9 @@ unsigned int indices[] = {  // note that we start from 0!
 
 GLfloat points[] =
 {
-	-0.5f,-0.5f,0.0,
-	0.5f,-0.5f,0.0,
-	0.0f,0.5f,0.0
+	 0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
+	-0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
+	 0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
 };
 
 GLfloat triColor[] = { 0.9, 0.0, 0.2, 1.0 };
@@ -72,7 +72,11 @@ void init(void)
 	// Initialize the vertex position attribute from the vertex shader
 	GLuint loc = glGetAttribLocation(program, "aPos");
 	glEnableVertexAttribArray(loc);
-	glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE, 0,0);
+	glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE,6 * sizeof(float),(void*)0);
+
+	GLuint aColor = glGetAttribLocation(program, "aColor");
+	glEnableVertexAttribArray(aColor);
+	glVertexAttribPointer(aColor, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3*sizeof(float)) );
 
 	int nrAttributes;
 	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
