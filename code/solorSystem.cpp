@@ -48,7 +48,7 @@ void reshape(int W, int H)
 	h = H;
 }
 
-GLuint uniformColor;
+GLuint offset;
 
 void init(void)
 {
@@ -82,7 +82,7 @@ void init(void)
 	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
 	cout << "Maximum nr of vertex attributes supported: " << nrAttributes << "\n";
 
-	uniformColor = glGetUniformLocation(program, "ourColor");
+	offset = glGetUniformLocation(program, "offset");
 
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 }
@@ -90,7 +90,7 @@ void init(void)
 
 void display(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
-	glUniform4fv(uniformColor, 1, triColor);
+	glUniform1f(offset,0.6);
 	glDrawArrays(GL_TRIANGLES, 0, NumPoints);    // draw the points
 	//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glutSwapBuffers();
