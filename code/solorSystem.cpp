@@ -52,12 +52,13 @@ void reshape(int W, int H)
 
 unsigned char* textureData;
 GLuint  VBO, VAO, EBO;
-GLuint texture1, texture2;;
+GLuint texture1, texture2;
+GLuint program;
 void init(void)
 {
 
 	// Load shaders and use the resulting shader program
-	GLuint program = LoadShaders("./shaders/vshader.glsl", "./shaders/fshader.glsl");
+	program = LoadShaders("./shaders/vshader.glsl", "./shaders/fshader.glsl");
 	glUseProgram(program);
 
 	// Create a vertex array object
@@ -99,7 +100,7 @@ void init(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	// set texture filtering parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	// load image, create texture and generate mipmaps
@@ -139,7 +140,11 @@ void init(void)
 	stbi_image_free(textureData);
 	//----------------------------------------------------------------------------------------
 
-	
+
+	glUniform1i(glGetUniformLocation(program, "texture1"), 0);
+	glUniform1i(glGetUniformLocation(program, "texture2"), 1);
+
+	/*
 	GLuint uniformTexture1;
 	uniformTexture1 = glGetUniformLocation(program, "texture1");
 	glUniform1i(program, 0);
@@ -147,7 +152,7 @@ void init(void)
 	GLuint uniformTexture2;
 	uniformTexture2 = glGetUniformLocation(program, "texture2");
 	glUniform1i(program, 1);
-
+	*/
 	int nrAttributes;
 	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
 	cout << "Maximum nr of vertex attributes supported: " << nrAttributes << "\n";
@@ -158,6 +163,7 @@ void init(void)
 
 
 void display(void) {
+	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -167,6 +173,7 @@ void display(void) {
 
 
 	//glDrawArrays(GL_TRIANGLES, 0, NumPoints);    // draw the points
+	glUseProgram(program);
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glutSwapBuffers();
