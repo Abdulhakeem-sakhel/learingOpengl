@@ -41,7 +41,6 @@ unsigned int indices[] = {  // note that we start from 0!
 	1, 2, 3    // second triangle
 };
 
-float borderColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 
 
 void reshape(int W, int H)
@@ -52,35 +51,50 @@ void reshape(int W, int H)
 }
 
 unsigned char* textureData;
-
-GLuint ebo;
-
+GLuint  VBO, VAO, EBO;
+GLuint texture1, texture2;;
 void init(void)
 {
 
-	// Create a vertex array object
-	GLuint vao;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	// Load shaders and use the resulting shader program
+	GLuint program = LoadShaders("./shaders/vshader.glsl", "./shaders/fshader.glsl");
+	glUseProgram(program);
 
-	// Create and initialize a buffer object
-	GLuint buffer;
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	// Create a vertex array object
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	// Create and initialize a buffer object	
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
 
 	//genrate ebo
-	glGenBuffers(1, &ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+	// Initialize the vertex position attribute from the vertex shader
+	GLuint loc = glGetAttribLocation(program, "aPos");
+	glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(loc);
+
+	GLuint aColor = glGetAttribLocation(program, "aColor");
+	glVertexAttribPointer(aColor, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(aColor);
+
+	GLuint aTexCoord = glGetAttribLocation(program, "aTexCoord");
+	glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(aTexCoord);
 
 	//---------------------------------------------------------------------------------------- loading TEXTURE
 	//Generating a texture
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);// all upcoming GL_TEXTURE_2D operations now have effect on this texture object
-
+	
+	// texture 1
+	// ---------
+	glGenTextures(1, &texture1);
+	glBindTexture(GL_TEXTURE_2D, texture1);// all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+	
 	 // set the texture wrapping parameters
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -88,10 +102,9 @@ void init(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
 	// load image, create texture and generate mipmaps
 	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true);
 	textureData = stbi_load("../textures/container.jpg", &width, &height, &nrChannels, 0);
 
 	if (textureData) {
@@ -102,24 +115,38 @@ void init(void)
 		cout << "Faild to load texture" << "\n";
 	}
 	stbi_image_free(textureData);
+	// texture 2
+	// ---------
+	glGenTextures(1, &texture2);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+	// set the texture wrapping parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// set texture filtering parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// load image, create texture and generate mipmaps
+	textureData = stbi_load("../textures/awesomeface.png", &width, &height, &nrChannels, 0);
+	if (textureData)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		cout << "Faild to load the asoume face texture" << "\n";
+	}
+	stbi_image_free(textureData);
 	//----------------------------------------------------------------------------------------
+
 	
-	// Load shaders and use the resulting shader program
-	GLuint program = LoadShaders("./shaders/vshader.glsl", "./shaders/fshader.glsl");
-	glUseProgram(program);
+	GLuint uniformTexture1;
+	uniformTexture1 = glGetUniformLocation(program, "texture1");
+	glUniform1i(program, 0);
 
-	// Initialize the vertex position attribute from the vertex shader
-	GLuint loc = glGetAttribLocation(program, "aPos");
-	glEnableVertexAttribArray(loc);
-	glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE,8 * sizeof(float),(void*)0);
-
-	GLuint aColor = glGetAttribLocation(program, "aColor");
-	glEnableVertexAttribArray(aColor);
-	glVertexAttribPointer(aColor, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)) );
-
-	GLuint aTexCoord = glGetAttribLocation(program, "aTexCoord");
-	glEnableVertexAttribArray(aTexCoord);
-	glVertexAttribPointer(aTexCoord, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	GLuint uniformTexture2;
+	uniformTexture2 = glGetUniformLocation(program, "texture2");
+	glUniform1i(program, 1);
 
 	int nrAttributes;
 	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
@@ -132,7 +159,15 @@ void init(void)
 
 void display(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+
+
 	//glDrawArrays(GL_TRIANGLES, 0, NumPoints);    // draw the points
+	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 	glutSwapBuffers();
 }
