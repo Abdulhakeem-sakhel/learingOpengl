@@ -1,10 +1,13 @@
 #include <glew.h>
 #include <GL/glut.h>
-#include <time.h>
 #include "shader.hpp"
 #include <iostream>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#include<glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtc/type_ptr.hpp>
 
 using namespace std;
 
@@ -12,21 +15,6 @@ int w = 520;
 int h = 520;
 
 const int NumPoints = 3;
-/*
-GLfloat points[] = {  
-	0.5f,  0.5f, 0.0f,  // top right
-	 0.5f, -0.5f, 0.0f,  // bottom right
-	-0.5f, -0.5f, 0.0f,  // bottom left
-	-0.5f,  0.5f, 0.0f   // top left 
-};
-
-
-
-
-	this code in init() methods if i want to do ebo
-	
-	
-*/
 
 GLfloat points[] =
 {
@@ -54,6 +42,8 @@ unsigned char* textureData;
 GLuint  VBO, VAO, EBO;
 GLuint texture1, texture2;
 GLuint program;
+GLuint transformLoc;
+glm::mat4 trans = glm::mat4(1.0f);
 void init(void)
 {
 
@@ -144,21 +134,24 @@ void init(void)
 	glUniform1i(glGetUniformLocation(program, "texture1"), 0);
 	glUniform1i(glGetUniformLocation(program, "texture2"), 1);
 
-	/*
-	GLuint uniformTexture1;
-	uniformTexture1 = glGetUniformLocation(program, "texture1");
-	glUniform1i(program, 0);
-
-	GLuint uniformTexture2;
-	uniformTexture2 = glGetUniformLocation(program, "texture2");
-	glUniform1i(program, 1);
-	*/
 	int nrAttributes;
 	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
 	cout << "Maximum nr of vertex attributes supported: " << nrAttributes << "\n";
 
+	trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	
+}
+void idle(void)
+{
+	
+	
+	trans = glm::rotate(trans, 0.0005f, glm::vec3(0.0f, 0.0f, 1.0f));
+
+	transformLoc = glGetUniformLocation(program, "transform");
+	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+	glutPostRedisplay();
 }
 
 
@@ -204,6 +197,7 @@ int main(int argc, char** argv)
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
 	glutReshapeFunc(reshape);
+	glutIdleFunc(idle);
 
 	glutMainLoop();
 	
