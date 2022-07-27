@@ -95,14 +95,19 @@ GLuint viewLoc;
 GLuint projectionLoc;
 //-------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------
+//glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+//glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+//glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+
+//glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+//glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+
+//glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+
+
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
-
-glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-
-glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 //-------------------------------------------------------------------------------------
 void init(void)
 {
@@ -219,8 +224,8 @@ void idle(void)
 	const float radius = 10.0f;
 	float camX = sin(ri) * radius;
 	float camZ = cos(ri) * radius;
-	glm::mat4 view;
-	view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+	//view = glm::lookAt(glm::vec3(0.0, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
 	glutPostRedisplay();
@@ -256,11 +261,25 @@ void display(void) {
 
 void keyboard(unsigned char key, int x, int y)
 {
+	const float cameraSpeed = 0.05f;
 	switch (key) {
 	case 033:
 		exit(EXIT_SUCCESS);
 		break;
+	case 'W':case 'w':
+		cameraPos += cameraSpeed * cameraFront;
+		break;
+	case 'S':case 's':
+		cameraPos -= cameraSpeed * cameraFront;
+		break;
+	case 'A':case 'a':
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		break;
+	case 'D':case 'd':
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		break;
 	}
+	glutPostRedisplay();
 }
 
 int main(int argc, char** argv)
