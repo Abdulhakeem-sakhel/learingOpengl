@@ -108,6 +108,10 @@ GLuint projectionLoc;
 glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+float sensitivity = 0.05;
+float yaw = -90.0f;
+float pitch = 0.0f;
 //-------------------------------------------------------------------------------------
 void init(void)
 {
@@ -202,7 +206,6 @@ void init(void)
 	//Coordinate-Systems
 	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-	projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
 	view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f),
 		glm::vec3(0.0f, 0.0f, 0.0f),
@@ -221,12 +224,13 @@ float ri = 0.0;
 void idle(void)
 {
 	ri += 0.001;
-	const float radius = 10.0f;
-	float camX = sin(ri) * radius;
-	float camZ = cos(ri) * radius;
-	//view = glm::lookAt(glm::vec3(0.0, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+	
+	
 	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+	projection = glm::perspective(glm::radians(45.0f), (float)w / (float)h, 0.1f, 100.0f);
+
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 	glutPostRedisplay();
 }
@@ -281,6 +285,51 @@ void keyboard(unsigned char key, int x, int y)
 	}
 	glutPostRedisplay();
 }
+int lastX = h / 2;
+int lastY = w / 2;
+bool firstMouse = true;
+void mov(int x, int y) {
+	if (firstMouse)
+	{
+		lastX = x;
+		lastY = y;
+		firstMouse = false;
+	}
+	if (lastX > w - 30)
+		lastX -= 30;
+	if (lastX < 30)
+		lastX += 30;
+	if (lastY > h - 30)
+		lastY -= 30;
+	if (lastY < 30)
+		lastY += 30;
+
+	float xoffset = x - lastX;
+	float yoffset = lastY - y;
+	lastX = x;
+	lastY = y;
+
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;
+	pitch += yoffset;
+
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(direction);
+
+	glm::vec3 Right = glm::normalize(glm::cross(cameraFront, glm::vec3(0.0f, 1.0f, 0.0f))); // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+	cameraUp = glm::normalize(glm::cross(Right, cameraFront));
+	glutPostRedisplay();
+}
 
 int main(int argc, char** argv)
 {
@@ -297,6 +346,8 @@ int main(int argc, char** argv)
 	glutKeyboardFunc(keyboard);
 	glutReshapeFunc(reshape);
 	glutIdleFunc(idle);
+	glutMotionFunc(mov);
+	glutPassiveMotionFunc(mov);
 
 	glutMainLoop();
 	
