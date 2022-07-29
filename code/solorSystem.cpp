@@ -8,16 +8,17 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
+#include "camera.h"
 using namespace std;
 
-int w = 520;
-int h = 520;
+int w = 16 *100;
+int h = 9 * 100;
 
 const int NumPoints = 3;
-
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 GLfloat points[] =
 {
-			// positions       // texture coords
+		// positions       // texture coords
 		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
          0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
          0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
@@ -93,25 +94,6 @@ glm::mat4 projection;
 GLuint modelLoc;
 GLuint viewLoc;
 GLuint projectionLoc;
-//-------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------
-//glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-//glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-//glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
-
-//glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-//glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
-
-//glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
-
-
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-float sensitivity = 0.05;
-float yaw = -90.0f;
-float pitch = 0.0f;
 //-------------------------------------------------------------------------------------
 void init(void)
 {
@@ -226,7 +208,7 @@ void idle(void)
 	ri += 0.001;
 	
 	
-	view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+	view = camera.GetViewMatrix();
 	projection = glm::perspective(glm::radians(45.0f), (float)w / (float)h, 0.1f, 100.0f);
 
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -271,16 +253,16 @@ void keyboard(unsigned char key, int x, int y)
 		exit(EXIT_SUCCESS);
 		break;
 	case 'W':case 'w':
-		cameraPos += cameraSpeed * cameraFront;
+		camera.ProcessKeyboard(FORWARD, cameraSpeed);
 		break;
 	case 'S':case 's':
-		cameraPos -= cameraSpeed * cameraFront;
+		camera.ProcessKeyboard(BACKWARD, cameraSpeed);
 		break;
 	case 'A':case 'a':
-		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		camera.ProcessKeyboard(LEFT, cameraSpeed);
 		break;
 	case 'D':case 'd':
-		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		camera.ProcessKeyboard(RIGHT, cameraSpeed);
 		break;
 	}
 	glutPostRedisplay();
@@ -308,26 +290,7 @@ void mov(int x, int y) {
 	float yoffset = lastY - y;
 	lastX = x;
 	lastY = y;
-
-	xoffset *= sensitivity;
-	yoffset *= sensitivity;
-
-	yaw += xoffset;
-	pitch += yoffset;
-
-	if (pitch > 89.0f)
-		pitch = 89.0f;
-	
-	if (pitch < -89.0f)
-		pitch = -89.0f;
-	glm::vec3 direction;
-	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	direction.y = sin(glm::radians(pitch));
-	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	cameraFront = glm::normalize(direction);
-
-	glm::vec3 Right = glm::normalize(glm::cross(cameraFront, glm::vec3(0.0f, 1.0f, 0.0f))); // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-	cameraUp = glm::normalize(glm::cross(Right, cameraFront));
+	camera.ProcessMouseMovement(xoffset, yoffset);
 	glutPostRedisplay();
 }
 

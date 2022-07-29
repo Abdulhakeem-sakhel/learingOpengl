@@ -134,6 +134,7 @@
     <ClCompile Include="solorSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="camera.h" />
     <ClInclude Include="shader.hpp" />
   </ItemGroup>
   <ItemGroup>
